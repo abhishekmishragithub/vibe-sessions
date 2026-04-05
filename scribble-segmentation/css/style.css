@@ -1,0 +1,105 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    background: #1a1a1a;
+    color: #eee;
+    font-family: system-ui, -apple-system, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+h1 {
+    font-size: 1.4rem;
+    margin-bottom: 16px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.canvas-row {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.panel { text-align: center; }
+
+.panel h2 {
+    font-size: 0.85rem;
+    font-weight: 400;
+    margin-bottom: 8px;
+    color: #aaa;
+}
+
+#output {
+    border: 2px solid #333;
+    border-radius: 6px;
+    max-width: 640px;
+    width: 100%;
+    height: auto;
+    background: #fff;
+}
+
+#drawing {
+    border: 2px solid #333;
+    border-radius: 6px;
+    background: #fff;
+    cursor: crosshair;
+    max-width: 540px;
+    width: 100%;
+    height: auto;
+}
+
+.controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    justify-content: center;
+}
+
+.controls label {
+    font-size: 0.8rem;
+    color: #aaa;
+}
+
+.controls input[type="range"] {
+    width: 120px;
+    accent-color: #888;
+}
+
+.controls .val {
+    font-size: 0.75rem;
+    color: #ccc;
+    min-width: 30px;
+}
+
+.hint {
+    margin-top: 10px;
+    font-size: 0.8rem;
+    color: #777;
+}
+
+#status {
+    margin-top: 16px;
+    font-size: 0.8rem;
+    color: #999;
+}
+
+#error-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    color: #fff;
+    font-size: 1.2rem;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 40px;
+    z-index: 100;
+}

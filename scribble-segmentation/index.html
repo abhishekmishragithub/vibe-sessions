@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scribble Segmentation</title>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <h1>Scribble Segmentation</h1>
+
+    <video id="webcam" autoplay playsinline style="display:none;"></video>
+
+    <div class="canvas-row">
+        <div class="panel">
+            <h2>Live Output</h2>
+            <canvas id="output" width="1280" height="720"></canvas>
+            <div class="controls">
+                <label for="brushSize">Brush</label>
+                <input type="range" id="brushSize" min="1" max="30" value="6">
+                <span class="val" id="brushVal">6px</span>
+            </div>
+        </div>
+        <div class="panel">
+            <h2>Drawing Canvas</h2>
+            <canvas id="drawing" width="1920" height="1080"></canvas>
+            <p class="hint">Left-drag to draw &middot; Right-click to clear</p>
+        </div>
+    </div>
+
+    <div id="status">Initializing&hellip;</div>
+    <div id="error-overlay"></div>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
