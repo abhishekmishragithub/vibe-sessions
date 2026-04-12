@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MORSE WEAVE | SEGMENTED ENGINE</title>
+    <link rel="stylesheet" href="segmented-style.css">
+</head>
+<body>
+    <div class="ui-container">
+        <aside class="sidebar">
+            <header class="sidebar-header">
+                <h1>SEGMENT WEAVE</h1>
+                <p class="status-sub">V2.0 // EXTRUSION CORE</p>
+            </header>
+
+            <div class="control-group">
+                <label for="textInput">INPUT SEQUENCE</label>
+                <textarea id="textInput" placeholder="Enter text..." rows="3">FOXTROVE OPS</textarea>
+            </div>
+
+            <div class="control-group">
+                <label for="colorActive">ACTIVE SEGMENT</label>
+                <div class="color-picker-wrapper">
+                    <input type="color" id="colorActive" value="#ffffff">
+                    <span id="colorActiveHex">#FFFFFF</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label for="colorDim">DIM SEGMENT</label>
+                <div class="color-picker-wrapper">
+                    <input type="color" id="colorDim" value="#1a1a1c">
+                    <span id="colorDimHex">#1A1A1C</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label for="gridScale">GRID SCALE <span id="gridScaleVal">40</span></label>
+                <input type="range" id="gridScale" min="20" max="100" value="40">
+            </div>
+
+            <div class="control-group">
+                <label for="extrusionInt">EXTRUSION DEPTH <span id="extrusionIntVal">100</span></label>
+                <input type="range" id="extrusionInt" min="0" max="300" value="100">
+            </div>
+
+            <div class="footer-info">
+                <p>STATUS: EXTRUDING...</p>
+                <p>MOUSE_PROXIMITY: ACTIVE</p>
+            </div>
+        </aside>
+
+        <main class="canvas-area">
+            <div class="top-bar">
+                <div class="status-indicators">
+                    <div class="stat-item">
+                        <span class="label">ENGINE</span>
+                        <span class="value">SEGMENTED_V2</span>
+                    </div>
+                </div>
+                <button id="downloadBtn" class="cyber-btn">
+                    SAVE.FRAME
+                </button>
+            </div>
+            <div id="canvasWrapper" class="canvas-wrapper">
+                <canvas id="weaveCanvas"></canvas>
+            </div>
+        </main>
+    </div>
+    <script src="segmented-script.js"></script>
+</body>
+</html>

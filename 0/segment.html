@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webcam Masking & Scribble</title>
+    <link rel="stylesheet" href="segment.css">
+    <!-- MediaPipe Segmentation -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div id="container">
+        <!-- The background is white (920x1080) -->
+        <div id="canvas-wrapper">
+            <canvas id="output-canvas" width="920" height="1080"></canvas>
+            <canvas id="draw-canvas" width="920" height="1080"></canvas>
+        </div>
+        
+        <div class="ui">
+            <h1>Webcam Masking & Motion Scribble</h1>
+            <p><strong>Left Click & Drag:</strong> Draw Scribble | <strong>Right Click:</strong> Clear Canvas</p>
+            <button id="start-btn">Allow Camera Access</button>
+            <p class="status" id="status-msg">Waiting for permission...</p>
+        </div>
+    </div>
+
+    <!-- Hidden video element for processing -->
+    <video id="input-video" playsinline style="display:none;"></video>
+
+    <script src="segment.js"></script>
+</body>
+</html>

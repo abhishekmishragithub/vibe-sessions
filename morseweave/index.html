@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MORSE WEAVE | FLUID ENGINE</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="ui-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <header class="sidebar-header">
+                <h1>MORSE WEAVE</h1>
+                <p class="status-sub">FOR OPERATORS, NOT EXPERIMENTERS</p>
+            </header>
+
+            <div class="control-group">
+                <label for="textInput">INPUT SEQUENCE</label>
+                <textarea id="textInput" placeholder="Enter text..." rows="3">KNOW WHERE TO START.</textarea>
+            </div>
+
+            <div class="control-group">
+                <label for="colorDash">DASH ELEMENT</label>
+                <div class="color-picker-wrapper">
+                    <input type="color" id="colorDash" value="#ffffff">
+                    <span id="colorDashHex">#FFFFFF</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label for="colorDot">DOT ELEMENT</label>
+                <div class="color-picker-wrapper">
+                    <input type="color" id="colorDot" value="#888888">
+                    <span id="colorDotHex">#888888</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label for="repeatX">X REPETITION <span id="repeatXVal">4</span></label>
+                <input type="range" id="repeatX" min="1" max="15" value="4">
+            </div>
+
+            <div class="control-group">
+                <label for="repeatY">Y REPETITION <span id="repeatYVal">4</span></label>
+                <input type="range" id="repeatY" min="1" max="15" value="4">
+            </div>
+
+            <div class="control-group">
+                <label for="tileSize">GRID SCALE <span id="tileSizeVal">20</span></label>
+                <input type="range" id="tileSize" min="5" max="50" value="20">
+            </div>
+
+            <div class="control-group">
+                <label for="windIntensity">WIND INTENSITY <span id="windIntensityVal">50</span></label>
+                <input type="range" id="windIntensity" min="0" max="100" value="50">
+            </div>
+
+            <div class="footer-info">
+                <p>SYS.ONLINE // OP.READY</p>
+                <p>CLOCK: <span id="clockDisplay">00:00:00</span></p>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="canvas-area">
+            <div class="top-bar">
+                <div class="status-indicators">
+                    <div class="stat-item">
+                        <span class="label">VELOCITY</span>
+                        <span id="windSpeed" class="value">0.00</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="label">NODES</span>
+                        <span id="nodeCount" class="value">0</span>
+                    </div>
+                </div>
+                <div class="wind-viz" id="windViz">
+                    <!-- Bars will be generated via JS -->
+                </div>
+                <button id="downloadBtn" class="cyber-btn">
+                    EXPORT.FRAME
+                </button>
+            </div>
+            <div id="canvasWrapper" class="canvas-wrapper">
+                <canvas id="weaveCanvas"></canvas>
+            </div>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
