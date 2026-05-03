@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WORM.3D-FABRIC</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Standard UMD builds for local file compatibility -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+    <div id="ui-container">
+        <h1>WORM.3D-FABRIC</h1>
+        
+        <div class="control-group">
+            <label for="geometry-select">Canvas Geometry:</label>
+            <select id="geometry-select">
+                <option value="cube">Cube</option>
+                <option value="sphere">Sphere</option>
+                <option value="cone">Cone</option>
+                <option value="donut">Torus (Donut)</option>
+                <option value="cylinder">Cylinder</option>
+                <option value="knot">Torus Knot</option>
+                <option value="plane">Infinite Plane</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label for="death-proximity">Avoidance Proximity:</label>
+            <input type="number" id="death-proximity" value="0.5" step="0.1" min="0">
+        </div>
+
+        <div class="control-group">
+            <label for="death-rate">Death Rate:</label>
+            <input type="range" id="death-rate" min="0" max="6" step="0.1" value="0">
+            <span id="death-rate-val">0</span>
+        </div>
+
+        <div class="control-group">
+            <label for="repro-rate">Reproduction Rate:</label>
+            <input type="range" id="repro-rate" min="0" max="6" step="0.1" value="1.5">
+            <span id="repro-rate-val">1.5</span>
+        </div>
+
+        <div class="control-group">
+            <label>Movement Dims (3D):</label>
+            <div id="dim-toggles">
+                <label><input type="checkbox" class="dim-check" value="x" checked> X-Axis</label>
+                <label><input type="checkbox" class="dim-check" value="y" checked> Y-Axis</label>
+                <label><input type="checkbox" class="dim-check" value="z" checked> Z-Axis</label>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label>Allowed Angles:</label>
+            <div id="angle-presets" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                <label><input type="checkbox" class="angle-check" value="0" checked> 0°</label>
+                <label><input type="checkbox" class="angle-check" value="45" checked> 45°</label>
+                <label><input type="checkbox" class="angle-check" value="90" checked> 90°</label>
+                <label><input type="checkbox" class="angle-check" value="135" checked> 135°</label>
+                <label><input type="checkbox" class="angle-check" value="180" checked> 180°</label>
+                <label><input type="checkbox" class="angle-check" value="225" checked> 225°</label>
+                <label><input type="checkbox" class="angle-check" value="270" checked> 270°</label>
+                <label><input type="checkbox" class="angle-check" value="315" checked> 315°</label>
+            </div>
+        </div>
+
+        <div id="button-row">
+            <button id="clear-btn">CLEAR</button>
+            <button id="export-btn">EXPORT PNG</button>
+        </div>
+
+        <div class="instructions">
+            Left Click: Spawn Worm<br>
+            Right Click: Rotate<br>
+            Scroll: Zoom (Internal/External)
+        </div>
+    </div>
+    
+    <div id="canvas-container" style="min-height: 400px; background: #000;">
+        <div id="start-overlay">[ click surface to plant worms ]</div>
+        <div id="status-bar">
+            <span>worms: <span id="stat-worms">0</span></span>
+            <span>pixels: <span id="stat-pixels">0</span></span>
+            <span>fps: <span id="stat-fps">0</span></span>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

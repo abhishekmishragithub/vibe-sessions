@@ -1,0 +1,170 @@
+:root {
+    --nokia-green: #9bbc0f;
+    --nokia-dark: #0f380f;
+    --nokia-mid: #306230;
+    --nokia-light: #8bac0f;
+}
+
+body {
+    background-color: #1a1a1a;
+    color: var(--nokia-green);
+    font-family: 'Courier New', Courier, monospace;
+    display: flex;
+    flex-direction: row;
+    margin: 0;
+    height: 100vh;
+    overflow: hidden;
+}
+
+#ui-container {
+    width: 320px;
+    background-color: var(--nokia-dark);
+    padding: 20px;
+    border-right: 4px solid var(--nokia-mid);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    box-sizing: border-box;
+    z-index: 10;
+    overflow-y: auto;
+}
+
+h1 {
+    font-size: 24px;
+    margin: 0 0 10px 0;
+    text-align: center;
+    border-bottom: 2px solid var(--nokia-green);
+    padding-bottom: 5px;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+label {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+input[type="number"], input[type="range"] {
+    background: var(--nokia-mid);
+    border: 1px solid var(--nokia-green);
+    color: var(--nokia-green);
+    padding: 5px;
+}
+
+#angle-presets {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+}
+
+#angle-presets label {
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+#button-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+button {
+    background-color: var(--nokia-mid);
+    color: var(--nokia-green);
+    border: 2px solid var(--nokia-green);
+    padding: 10px;
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+button:hover {
+    background-color: var(--nokia-green);
+    color: var(--nokia-dark);
+}
+
+#export-btn {
+    background-color: #d4e157; /* Yellowish nokia tone */
+    color: var(--nokia-dark);
+    border-color: #d4e157;
+}
+
+#export-btn:hover {
+    background-color: #e6ee9c;
+    border-color: #e6ee9c;
+}
+
+.instructions {
+    margin-top: auto;
+    font-size: 13px;
+    padding: 10px;
+    background: var(--nokia-mid);
+    border: 1px dashed var(--nokia-green);
+    line-height: 1.4;
+}
+
+#canvas-container {
+    flex-grow: 1;
+    position: relative;
+    background-color: var(--nokia-light);
+    display: flex;
+    flex-direction: column; /* Stack canvas and status bar */
+    align-items: center;
+    justify-content: center;
+    cursor: crosshair;
+    overflow: hidden;
+}
+
+#status-bar {
+    width: 1080px; /* Match forced canvas width */
+    max-width: 90vw;
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0;
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--nokia-dark);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+#status-bar span span {
+    color: var(--nokia-mid);
+}
+
+canvas {
+    image-rendering: pixelated;
+    background-color: var(--nokia-green);
+    width: 1080px; /* Force large visual size */
+    height: 800px;
+    max-width: 90vw;
+    max-height: 85vh;
+    box-shadow: 0 0 50px rgba(0,0,0,0.9);
+    border: 4px solid var(--nokia-dark);
+}
+
+#start-overlay {
+    position: absolute;
+    font-size: 32px;
+    font-weight: bold;
+    color: var(--nokia-dark);
+    text-shadow: 2px 2px var(--nokia-mid);
+    pointer-events: none;
+    text-align: center;
+    z-index: 5;
+    background: rgba(155, 188, 15, 0.8);
+    padding: 20px;
+    border: 4px double var(--nokia-dark);
+}
+
+#start-overlay.hidden {
+    display: none;
+}
