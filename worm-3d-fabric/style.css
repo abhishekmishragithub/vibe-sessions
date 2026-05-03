@@ -69,11 +69,75 @@ select, input[type="number"], input[type="range"] {
     gap: 8px;
 }
 
+.dpad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    margin-bottom: 4px;
+}
+button.dir {
+    background: transparent;
+    border: 1px dashed var(--nokia-mid);
+    color: var(--nokia-mid);
+    font-family: inherit;
+    font-weight: bold;
+    font-size: 11px;
+    padding: 8px 0;
+    cursor: pointer;
+    transition: all 0.1s;
+    text-decoration: line-through;
+    text-decoration-color: var(--nokia-mid);
+}
+button.dir.on {
+    background: var(--nokia-green);
+    color: var(--nokia-dark);
+    border: 1px solid var(--nokia-green);
+    text-decoration: none;
+}
+button.dir:hover {
+    border-color: var(--nokia-green);
+    color: var(--nokia-green);
+}
+button.dir.on:hover { color: var(--nokia-dark); }
+button.dir.vert {
+    background: rgba(48, 98, 48, 0.3);
+}
+button.dir.vert.on {
+    background: var(--nokia-light);
+}
+button.dir.wide {
+    width: 100%;
+    margin-bottom: 4px;
+}
+.hint-row {
+    font-size: 10px;
+    color: var(--nokia-mid);
+    margin-top: 4px;
+    line-height: 1.4;
+}
+.row-label {
+    display: flex !important;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 12px !important;
+}
+.row-label input[type="checkbox"] {
+    accent-color: var(--nokia-green);
+    width: 14px; height: 14px;
+    cursor: pointer;
+}
+
 #button-row {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
     margin-top: 10px;
+}
+#button-row button {
+    font-size: 11px;
+    padding: 8px 4px;
 }
 
 button {
@@ -110,7 +174,7 @@ button:hover {
 #canvas-container {
     flex-grow: 1;
     position: relative;
-    background-color: #111;
+    background-color: #050505;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -133,22 +197,3 @@ button:hover {
     z-index: 5;
 }
 
-#start-overlay {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 24px;
-    font-weight: bold;
-    color: var(--nokia-green);
-    text-align: center;
-    z-index: 5;
-    background: rgba(15, 56, 15, 0.6);
-    padding: 15px;
-    border: 2px solid var(--nokia-green);
-    pointer-events: none;
-}
-
-#start-overlay.hidden {
-    display: none;
-}

@@ -5,85 +5,105 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WORM.3D-FABRIC</title>
     <link rel="stylesheet" href="style.css">
-    
-    <!-- Standard UMD builds for local file compatibility -->
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/BufferGeometryUtils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/OBJExporter.js"></script>
 </head>
 <body>
     <div id="ui-container">
         <h1>WORM.3D-FABRIC</h1>
-        
+
         <div class="control-group">
             <label for="geometry-select">Canvas Geometry:</label>
             <select id="geometry-select">
                 <option value="cube">Cube</option>
                 <option value="sphere">Sphere</option>
-                <option value="cone">Cone</option>
-                <option value="donut">Torus (Donut)</option>
                 <option value="cylinder">Cylinder</option>
+                <option value="cone">Cone</option>
+                <option value="donut">Donut (Torus)</option>
+                <option value="capsule">Capsule</option>
+                <option value="octahedron">Octahedron</option>
+                <option value="tetrahedron">Tetrahedron</option>
+                <option value="pyramid">Pyramid</option>
+                <option value="hourglass">Hourglass</option>
                 <option value="knot">Torus Knot</option>
-                <option value="plane">Infinite Plane</option>
+                <option value="plane">Plane</option>
             </select>
         </div>
 
         <div class="control-group">
-            <label for="death-proximity">Avoidance Proximity:</label>
-            <input type="number" id="death-proximity" value="0.5" step="0.1" min="0">
+            <label for="death-proximity">Collision Distance: <span id="death-prox-unit"></span></label>
+            <input type="number" id="death-proximity" value="3" step="1" min="0" max="20">
+            <span class="hint-row">cells. how close two worm heads must be for a death-check.</span>
         </div>
 
         <div class="control-group">
-            <label for="death-rate">Death Rate:</label>
-            <input type="range" id="death-rate" min="0" max="6" step="0.1" value="0">
-            <span id="death-rate-val">0</span>
+            <label for="death-rate">Death Rate: <span id="death-rate-val">0</span> %</label>
+            <input type="range" id="death-rate" min="0" max="100" step="1" value="0">
+            <span class="hint-row">% chance per tick to die when within collision distance of another worm.</span>
         </div>
 
         <div class="control-group">
-            <label for="repro-rate">Reproduction Rate:</label>
+            <label for="repro-rate">Reproduction Rate: <span id="repro-rate-val">1.5</span></label>
             <input type="range" id="repro-rate" min="0" max="6" step="0.1" value="1.5">
-            <span id="repro-rate-val">1.5</span>
         </div>
 
         <div class="control-group">
-            <label>Movement Dims (3D):</label>
-            <div id="dim-toggles">
-                <label><input type="checkbox" class="dim-check" value="x" checked> X-Axis</label>
-                <label><input type="checkbox" class="dim-check" value="y" checked> Y-Axis</label>
-                <label><input type="checkbox" class="dim-check" value="z" checked> Z-Axis</label>
-            </div>
+            <label for="worm-length">Worm Length: <span id="worm-length-val">8</span> cells</label>
+            <input type="range" id="worm-length" min="1" max="40" step="1" value="8">
         </div>
 
         <div class="control-group">
-            <label>Allowed Angles:</label>
-            <div id="angle-presets" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
-                <label><input type="checkbox" class="angle-check" value="0" checked> 0°</label>
-                <label><input type="checkbox" class="angle-check" value="45" checked> 45°</label>
-                <label><input type="checkbox" class="angle-check" value="90" checked> 90°</label>
-                <label><input type="checkbox" class="angle-check" value="135" checked> 135°</label>
-                <label><input type="checkbox" class="angle-check" value="180" checked> 180°</label>
-                <label><input type="checkbox" class="angle-check" value="225" checked> 225°</label>
-                <label><input type="checkbox" class="angle-check" value="270" checked> 270°</label>
-                <label><input type="checkbox" class="angle-check" value="315" checked> 315°</label>
+            <label for="tick-speed">Tick Speed: <span id="tick-speed-val">60</span> /s</label>
+            <input type="range" id="tick-speed" min="5" max="120" step="5" value="60">
+        </div>
+
+        <div class="control-group">
+            <label class="row-label">
+                <input type="checkbox" id="music-toggle">
+                <span>Music (procedural)</span>
+            </label>
+            <input type="range" id="music-volume" min="0" max="100" step="1" value="100">
+            <span class="hint-row">layers: kick · hat · pad · pentatonic melody · bell on births</span>
+        </div>
+
+        <div class="control-group">
+            <label>Movement Directions:</label>
+            <div class="dpad">
+                <button class="dir on" data-dir="NW">NW</button>
+                <button class="dir on" data-dir="N">N</button>
+                <button class="dir on" data-dir="NE">NE</button>
+                <button class="dir on" data-dir="W">W</button>
+                <button class="dir vert on" data-dir="UP">UP</button>
+                <button class="dir on" data-dir="E">E</button>
+                <button class="dir on" data-dir="SW">SW</button>
+                <button class="dir on" data-dir="S">S</button>
+                <button class="dir on" data-dir="SE">SE</button>
             </div>
+            <button class="dir vert wide on" data-dir="DOWN">DOWN</button>
+            <div class="hint-row">click to toggle. compass = horizontal plane (X/Z). UP/DOWN = Y axis.</div>
         </div>
 
         <div id="button-row">
             <button id="clear-btn">CLEAR</button>
             <button id="export-btn">EXPORT PNG</button>
+            <button id="export-obj-btn">EXPORT OBJ</button>
         </div>
 
         <div class="instructions">
-            Left Click: Spawn Worm<br>
-            Right Click: Rotate<br>
-            Scroll: Zoom (Internal/External)
+            Left Click on geometry: Spawn Worm<br>
+            Drag: Rotate · Scroll: Zoom (also internal)<br>
+            Right Click: Save &amp; Stop
         </div>
     </div>
-    
-    <div id="canvas-container" style="min-height: 400px; background: #000;">
-        <div id="start-overlay">[ click surface to plant worms ]</div>
+
+    <div id="canvas-container">
         <div id="status-bar">
             <span>worms: <span id="stat-worms">0</span></span>
-            <span>pixels: <span id="stat-pixels">0</span></span>
+            <span>deaths: <span id="stat-deaths">0</span></span>
+            <span>painted: <span id="stat-pixels">0</span></span>
             <span>fps: <span id="stat-fps">0</span></span>
         </div>
     </div>
