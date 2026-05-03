@@ -1,0 +1,1050 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>worm.nisha 3D — pattern garden</title>
+<style>
+  :root {
+    --lcd-bg: #9bbc0f;
+    --lcd-bg-deep: #8bac0f;
+    --lcd-ink: #0f380f;
+    --lcd-ink-soft: #306230;
+    --shell: #1a1a1a;
+    --shell-light: #2a2a2a;
+    --accent: #c2d62b;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: #0a0a0a;
+    color: #d8d8d8;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+  body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 24px;
+    padding: 24px;
+    height: 100vh;
+  }
+  @media (max-width: 900px) {
+    body { grid-template-columns: 1fr; height: auto; overflow: auto; }
+  }
+  .stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: 0;
+  }
+  .device {
+    background: var(--shell);
+    padding: 18px 18px 26px;
+    border-radius: 18px;
+    box-shadow:
+      0 0 0 1px #000,
+      0 1px 0 1px var(--shell-light) inset,
+      0 30px 80px rgba(0,0,0,0.6);
+    position: relative;
+  }
+  .device::after {
+    content: "NOKLA 3D";
+    position: absolute;
+    bottom: 6px; left: 50%;
+    transform: translateX(-50%);
+    color: #444;
+    font-size: 10px;
+    letter-spacing: 4px;
+  }
+  .screen {
+    position: relative;
+    background: var(--lcd-bg);
+    padding: 10px;
+    border-radius: 6px;
+    box-shadow:
+      inset 0 0 0 2px #000,
+      inset 0 0 30px rgba(15,56,15,0.35);
+  }
+  #threecv {
+    display: block;
+    background: var(--lcd-bg);
+    width: 640px;
+    height: 480px;
+  }
+  .screen::before {
+    content: "";
+    position: absolute;
+    inset: 10px;
+    pointer-events: none;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(15,56,15,0.05) 0 1px, transparent 1px 3px);
+    mix-blend-mode: multiply;
+    border-radius: 2px;
+  }
+  .hud {
+    width: 100%;
+    max-width: 640px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #888;
+    letter-spacing: 1px;
+  }
+  .hud b { color: var(--accent); font-weight: 600; }
+
+  .panel {
+    background: #131313;
+    border: 1px solid #222;
+    border-radius: 12px;
+    padding: 18px;
+    height: fit-content;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+  }
+  .panel h1 {
+    margin: 0 0 4px;
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: var(--accent);
+  }
+  .panel p.lede {
+    margin: 0 0 16px;
+    font-size: 11px;
+    color: #777;
+    line-height: 1.5;
+  }
+  .switcher {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 18px;
+  }
+  .switcher a {
+    flex: 1;
+    text-align: center;
+    padding: 7px;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-decoration: none;
+    color: #777;
+    background: #0a0a0a;
+    border: 1px solid #222;
+    border-radius: 5px;
+  }
+  .switcher a.cur { background: var(--accent); color: #000; border-color: var(--accent); }
+  .ctl { margin-bottom: 16px; }
+  .ctl label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 11px;
+    color: #aaa;
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+  }
+  .ctl label .v {
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  .ctl input[type="range"] { width: 100%; accent-color: var(--accent); }
+  .ctl input[type="number"], .ctl select {
+    width: 100%;
+    background: #0a0a0a;
+    border: 1px solid #2a2a2a;
+    color: #d8d8d8;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font: inherit;
+    font-size: 12px;
+  }
+  .ctl select {
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    background-image:
+      linear-gradient(45deg, transparent 50%, var(--accent) 50%),
+      linear-gradient(135deg, var(--accent) 50%, transparent 50%);
+    background-position:
+      calc(100% - 14px) 50%,
+      calc(100% - 9px) 50%;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    padding-right: 24px;
+  }
+  .ctl select:focus, .ctl input[type="number"]:focus {
+    outline: none; border-color: var(--accent);
+  }
+  .seg {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+  }
+  .seg button {
+    background: transparent;
+    border: 1px dashed #3a3a3a;
+    color: #555;
+    padding: 6px 0;
+    font: inherit;
+    font-size: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: line-through;
+    text-decoration-color: #444;
+  }
+  .seg button.on {
+    background: var(--accent); color: #000;
+    border: 1px solid var(--accent);
+    text-decoration: none;
+  }
+  .actions { display: flex; gap: 8px; margin-top: 8px; }
+  .btn {
+    flex: 1;
+    padding: 10px;
+    background: #0a0a0a;
+    border: 1px solid #2a2a2a;
+    border-radius: 6px;
+    color: #d8d8d8;
+    font: inherit;
+    font-size: 11px;
+    letter-spacing: 1px;
+    cursor: pointer;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn.primary { background: var(--accent); color: #000; border-color: var(--accent); }
+  .hint {
+    font-size: 10px;
+    color: #555;
+    line-height: 1.6;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid #1f1f1f;
+  }
+  .hint kbd {
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 9px;
+    color: #aaa;
+  }
+  .hint-row { font-size: 10px; color: #555; margin-top: 6px; }
+</style>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+
+<div class="stage">
+  <div class="device">
+    <div class="screen">
+      <canvas id="threecv" width="640" height="480"></canvas>
+    </div>
+  </div>
+  <div class="hud">
+    <span>worms <b id="hud-worms">0</b></span>
+    <span>shape <b id="hud-shape">cube</b></span>
+    <span>ticks <b id="hud-ticks">0</b></span>
+    <span>fps <b id="hud-fps">--</b></span>
+  </div>
+</div>
+
+<aside class="panel">
+  <div class="switcher">
+    <a href="index.html">2D</a>
+    <a class="cur" href="index3d.html">3D</a>
+  </div>
+  <h1>WORM.NISHA 3D</h1>
+  <p class="lede">click the screen to plant a worm. drag to rotate · wheel to zoom · right-drag to pan. right-click ends &amp; exports PNG.</p>
+
+  <div class="ctl">
+    <label>container shape</label>
+    <select id="shape">
+      <option value="cube">cube</option>
+      <option value="sphere">sphere</option>
+      <option value="cylinder">cylinder</option>
+      <option value="cone">cone</option>
+      <option value="torus">donut (torus)</option>
+      <option value="capsule">capsule</option>
+      <option value="octahedron">octahedron</option>
+      <option value="tetrahedron">tetrahedron</option>
+      <option value="icosahedron">icosahedron</option>
+      <option value="dodecahedron">dodecahedron</option>
+      <option value="pyramid">pyramid</option>
+      <option value="hourglass">hourglass</option>
+      <option value="disk">disk</option>
+    </select>
+  </div>
+
+  <div class="ctl">
+    <label>avoidance proximity <span class="v" id="v-prox">3</span><small style="color:#555">units</small></label>
+    <input type="number" id="prox" min="1" max="60" value="3" />
+  </div>
+
+  <div class="ctl">
+    <label>growth interval <span class="v" id="v-grow">5</span><small style="color:#555">steps/+1</small></label>
+    <input type="range" id="grow" min="1" max="50" step="1" value="5" />
+  </div>
+
+  <div class="ctl">
+    <label>death rate <span class="v" id="v-death">0</span></label>
+    <input type="range" id="death" min="0" max="100" step="1" value="0" />
+  </div>
+
+  <div class="ctl">
+    <label>reproduction rate <span class="v" id="v-repro">2</span></label>
+    <input type="range" id="repro" min="0" max="100" step="1" value="2" />
+  </div>
+
+  <div class="ctl">
+    <label>direction set <span class="v" id="v-dirs">26</span></label>
+    <div class="seg">
+      <button data-set="6">6 (axes)</button>
+      <button data-set="18">18 (+edges)</button>
+      <button data-set="26" class="on">26 (full)</button>
+    </div>
+    <div class="hint-row">how many discrete directions a worm can choose</div>
+  </div>
+
+  <div class="ctl">
+    <label>tick speed <span class="v" id="v-speed">60</span><small style="color:#555">/s</small></label>
+    <input type="range" id="speed" min="5" max="120" step="5" value="60" />
+  </div>
+
+  <div class="actions">
+    <button class="btn" id="btn-clear">CLEAR</button>
+    <button class="btn primary" id="btn-export">EXPORT PNG</button>
+  </div>
+
+  <div class="hint">
+    <div><kbd>click</kbd> spawn a worm at cursor (raycast onto container)</div>
+    <div><kbd>right-click</kbd> end &amp; save PNG</div>
+    <div><kbd>drag</kbd> orbit · <kbd>wheel</kbd> zoom · <kbd>right-drag</kbd> pan</div>
+    <div><kbd>C</kbd> clear · <kbd>space</kbd> pause · <kbd>T</kbd> toggle trail</div>
+    <div style="margin-top:8px;color:#444">worms steer around each other &amp; the container surface. their trail is the pattern.</div>
+  </div>
+</aside>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ────────────────────────────────────────────────
+// SCENE
+// ────────────────────────────────────────────────
+const cv = document.getElementById('threecv');
+const renderer = new THREE.WebGLRenderer({
+  canvas: cv,
+  antialias: true,
+  preserveDrawingBuffer: true, // needed so toDataURL captures the latest frame
+});
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(640, 480, false);
+renderer.setClearColor(0x9bbc0f, 1);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(55, 640 / 480, 0.1, 1000);
+camera.position.set(70, 55, 90);
+
+const controls = new OrbitControls(camera, cv);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.minDistance = 0.5;   // can zoom inside the shape
+controls.maxDistance = 400;
+controls.mouseButtons = {
+  LEFT: null,                  // left click reserved for spawning worms
+  MIDDLE: THREE.MOUSE.ROTATE,
+  RIGHT: THREE.MOUSE.PAN,
+};
+controls.touches = {
+  ONE: null,
+  TWO: THREE.TOUCH.DOLLY_PAN,
+};
+// rotate via shift+left-drag instead, so a plain left click can spawn
+let rotateOnDrag = false;
+cv.addEventListener('pointerdown', (e) => {
+  if (e.button === 0 && (e.shiftKey || e.altKey)) {
+    rotateOnDrag = true;
+    controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
+  }
+});
+cv.addEventListener('pointerup', () => {
+  if (rotateOnDrag) {
+    rotateOnDrag = false;
+    controls.mouseButtons.LEFT = null;
+  }
+});
+
+// ────────────────────────────────────────────────
+// CONFIG / SDF SHAPES
+// ────────────────────────────────────────────────
+const SIZE = 30;
+const COLOR = {
+  ink:    0x0f380f,
+  inkSoft:0x306230,
+  bgFill: 0x9bbc0f,
+  accent: 0xc2d62b,
+};
+
+// Generic convex-polyhedron SDF: max over face plane signed distances.
+// Triangles are read from a non-indexed BufferGeometry (which TetrahedronGeometry,
+// IcosahedronGeometry etc. already are). Triangles whose normal is co-planar with
+// an existing one are merged — this avoids redundant plane checks.
+function planesFromGeometry(geo) {
+  const g = geo.index ? geo.toNonIndexed() : geo;
+  const pos = g.attributes.position;
+  const planes = [];
+  const va = new THREE.Vector3(), vb = new THREE.Vector3(), vc = new THREE.Vector3();
+  const ab = new THREE.Vector3(), ac = new THREE.Vector3();
+  for (let i = 0; i < pos.count; i += 3) {
+    va.fromBufferAttribute(pos, i);
+    vb.fromBufferAttribute(pos, i + 1);
+    vc.fromBufferAttribute(pos, i + 2);
+    ab.subVectors(vb, va);
+    ac.subVectors(vc, va);
+    const n = new THREE.Vector3().crossVectors(ab, ac).normalize();
+    if (!isFinite(n.x)) continue;
+    const d = n.dot(va);
+    let dup = false;
+    for (const pl of planes) {
+      if (pl.n.dot(n) > 0.999 && Math.abs(pl.d - d) < 0.01) { dup = true; break; }
+    }
+    if (!dup) planes.push({ n, d });
+  }
+  return planes;
+}
+function polySDF(planes) {
+  return p => {
+    let m = -Infinity;
+    for (const pl of planes) {
+      const s = pl.n.x * p.x + pl.n.y * p.y + pl.n.z * p.z - pl.d;
+      if (s > m) m = s;
+    }
+    return m;
+  };
+}
+
+const SHAPES = {
+  cube: {
+    geo: () => new THREE.BoxGeometry(SIZE * 2, SIZE * 2, SIZE * 2),
+    sdf: p => Math.max(Math.abs(p.x), Math.abs(p.y), Math.abs(p.z)) - SIZE,
+  },
+  sphere: {
+    geo: () => new THREE.SphereGeometry(SIZE, 48, 24),
+    sdf: p => Math.sqrt(p.x*p.x + p.y*p.y + p.z*p.z) - SIZE,
+  },
+  cylinder: {
+    geo: () => new THREE.CylinderGeometry(SIZE, SIZE, SIZE * 2, 48, 1, false),
+    sdf: p => Math.max(Math.hypot(p.x, p.z) - SIZE, Math.abs(p.y) - SIZE),
+  },
+  cone: {
+    geo: () => new THREE.ConeGeometry(SIZE, SIZE * 2, 48),
+    sdf: p => {
+      // ConeGeometry: apex at +y=SIZE, base at y=-SIZE, base radius SIZE
+      const h = SIZE;
+      const tY = (h - p.y) / (2 * h);  // 0 at top, 1 at bottom
+      const r = SIZE * Math.max(0, Math.min(1, tY));
+      return Math.max(Math.hypot(p.x, p.z) - r, Math.abs(p.y) - h);
+    },
+  },
+  torus: {
+    geo: () => {
+      const g = new THREE.TorusGeometry(SIZE * 0.7, SIZE * 0.3, 20, 60);
+      g.rotateX(Math.PI / 2);
+      return g;
+    },
+    sdf: p => {
+      const R = SIZE * 0.7, r = SIZE * 0.3;
+      const dx = Math.hypot(p.x, p.z) - R;
+      return Math.hypot(dx, p.y) - r;
+    },
+  },
+  capsule: {
+    geo: () => new THREE.CapsuleGeometry(SIZE * 0.55, SIZE * 1.3, 12, 24),
+    sdf: p => {
+      const h = SIZE * 0.65;
+      const r = SIZE * 0.55;
+      const cy = Math.max(-h, Math.min(h, p.y));
+      return Math.hypot(p.x, p.y - cy, p.z) - r;
+    },
+  },
+  octahedron: {
+    geo: () => new THREE.OctahedronGeometry(SIZE),
+    sdf: p => (Math.abs(p.x) + Math.abs(p.y) + Math.abs(p.z) - SIZE) * 0.5773502691896258,
+  },
+  tetrahedron: {
+    geo: () => new THREE.TetrahedronGeometry(SIZE * 1.2),
+    sdf: null, // built from planes
+  },
+  icosahedron: {
+    geo: () => new THREE.IcosahedronGeometry(SIZE),
+    sdf: null,
+  },
+  dodecahedron: {
+    geo: () => new THREE.DodecahedronGeometry(SIZE),
+    sdf: null,
+  },
+  pyramid: {
+    geo: () => new THREE.ConeGeometry(SIZE, SIZE * 2, 4),
+    sdf: p => {
+      const h = SIZE;
+      const tY = (h - p.y) / (2 * h);
+      const r = SIZE * Math.max(0, Math.min(1, tY));
+      // square cross-section requires accounting for the 45° rotation of ConeGeometry's 4-segment base.
+      // 4-segment ConeGeometry produces a square rotated 45° (vertices on axes).
+      // |x|+|z| <= r works for a square with vertices on axes.
+      return Math.max((Math.abs(p.x) + Math.abs(p.z)) - r, Math.abs(p.y) - h);
+    },
+  },
+  hourglass: {
+    geo: () => {
+      const top = new THREE.ConeGeometry(SIZE, SIZE, 32);
+      top.translate(0, SIZE / 2, 0);
+      const bot = new THREE.ConeGeometry(SIZE, SIZE, 32);
+      bot.rotateX(Math.PI);
+      bot.translate(0, -SIZE / 2, 0);
+      const merged = new THREE.BufferGeometry();
+      const tp = top.attributes.position.array;
+      const bp = bot.attributes.position.array;
+      const arr = new Float32Array(tp.length + bp.length);
+      arr.set(tp); arr.set(bp, tp.length);
+      merged.setAttribute('position', new THREE.BufferAttribute(arr, 3));
+      merged.computeVertexNormals();
+      return merged;
+    },
+    sdf: p => {
+      // double cone, apex meeting at y=0
+      const h = SIZE;
+      const r = SIZE * Math.abs(p.y) / h;
+      return Math.max(Math.hypot(p.x, p.z) - r, Math.abs(p.y) - h);
+    },
+  },
+  disk: {
+    geo: () => new THREE.CylinderGeometry(SIZE, SIZE, SIZE * 0.2, 64),
+    sdf: p => Math.max(Math.hypot(p.x, p.z) - SIZE, Math.abs(p.y) - SIZE * 0.1),
+  },
+};
+
+// fill in polyhedron SDFs from their geometry planes
+for (const name of ['tetrahedron', 'icosahedron', 'dodecahedron']) {
+  const planes = planesFromGeometry(SHAPES[name].geo());
+  SHAPES[name].sdf = polySDF(planes);
+}
+
+// ────────────────────────────────────────────────
+// CONTAINER
+// ────────────────────────────────────────────────
+let containerMesh = null;
+let containerEdges = null;
+let currentSDF = SHAPES.cube.sdf;
+let currentShape = 'cube';
+
+function buildContainer(name) {
+  if (containerMesh) { scene.remove(containerMesh); containerMesh.geometry.dispose(); }
+  if (containerEdges) { scene.remove(containerEdges); containerEdges.geometry.dispose(); }
+  const def = SHAPES[name];
+  const geo = def.geo();
+
+  // translucent fill (very subtle) + crisp edge lines (the LCD wireframe vibe)
+  const fillMat = new THREE.MeshBasicMaterial({
+    color: COLOR.ink,
+    transparent: true,
+    opacity: 0.05,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+  });
+  containerMesh = new THREE.Mesh(geo, fillMat);
+  scene.add(containerMesh);
+
+  const edges = new THREE.EdgesGeometry(geo, 12);
+  const lineMat = new THREE.LineBasicMaterial({ color: COLOR.ink, transparent: true, opacity: 0.55 });
+  containerEdges = new THREE.LineSegments(edges, lineMat);
+  scene.add(containerEdges);
+
+  currentSDF = def.sdf;
+  currentShape = name;
+  document.getElementById('hud-shape').textContent = name;
+}
+buildContainer('cube');
+
+// 3D dot-matrix lattice — gives the inside of the volume that "pixel grid" feel
+const lattice = (() => {
+  const step = 6;
+  const verts = [];
+  for (let x = -SIZE; x <= SIZE; x += step)
+    for (let y = -SIZE; y <= SIZE; y += step)
+      for (let z = -SIZE; z <= SIZE; z += step)
+        verts.push(x, y, z);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+  const m = new THREE.PointsMaterial({
+    color: COLOR.inkSoft, size: 1, sizeAttenuation: false,
+    transparent: true, opacity: 0.18,
+  });
+  const pts = new THREE.Points(g, m);
+  scene.add(pts);
+  return pts;
+})();
+
+// ────────────────────────────────────────────────
+// DIRECTION SETS
+// ────────────────────────────────────────────────
+function buildDirs(count) {
+  const dirs = [];
+  if (count >= 6) {
+    dirs.push(
+      new THREE.Vector3( 1, 0, 0), new THREE.Vector3(-1, 0, 0),
+      new THREE.Vector3( 0, 1, 0), new THREE.Vector3( 0,-1, 0),
+      new THREE.Vector3( 0, 0, 1), new THREE.Vector3( 0, 0,-1),
+    );
+  }
+  if (count >= 18) {
+    // edge centers of a cube — 12 unit vectors with one zero component
+    for (const [a, b] of [['x','y'],['x','z'],['y','z']]) {
+      for (const sa of [-1, 1]) for (const sb of [-1, 1]) {
+        const v = new THREE.Vector3(0, 0, 0);
+        v[a] = sa; v[b] = sb;
+        v.normalize();
+        dirs.push(v);
+      }
+    }
+  }
+  if (count >= 26) {
+    // corner directions — all signs of (±1, ±1, ±1)
+    for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const sz of [-1, 1]) {
+      dirs.push(new THREE.Vector3(sx, sy, sz).normalize());
+    }
+  }
+  return dirs;
+}
+let DIRS = buildDirs(26);
+
+// ────────────────────────────────────────────────
+// STATE
+// ────────────────────────────────────────────────
+const state = {
+  worms: [],
+  ticks: 0,
+  paused: false,
+  showTrail: true,
+  fps: 0,
+  cfg: {
+    proximity: 3,
+    growthSteps: 5,
+    deathRate: 0,
+    reproRate: 2,
+    dirCount: 26,
+    tickHz: 60,
+  },
+};
+
+// ────────────────────────────────────────────────
+// WORM
+// ────────────────────────────────────────────────
+const TRAIL_COLORS = [0x0f380f, 0x173d17, 0x1f4f1f, 0x0a2e0a, 0x306230, 0x284828, 0x3d6b3d, 0x143614];
+let wormId = 0;
+
+function makeWorm(pos) {
+  const dir = DIRS[Math.floor(Math.random() * DIRS.length)].clone();
+  return {
+    id: ++wormId,
+    pos: pos.clone(),
+    dir,
+    body: [pos.clone()],          // sequence of Vector3, head at index 0
+    maxLen: 3,
+    stepsSinceGrowth: 0,
+    stepsSinceTurn: 0,
+    age: 0,
+    alive: true,
+    trailColor: TRAIL_COLORS[wormId % TRAIL_COLORS.length],
+    flash: 0,
+  };
+}
+
+function bestEscapeDir(w) {
+  // pick the allowed direction whose advance lands the worm furthest INSIDE the container
+  let best = w.dir, bestSDF = Infinity;
+  const test = new THREE.Vector3();
+  for (const d of DIRS) {
+    test.copy(w.pos).addScaledVector(d, 1);
+    const s = currentSDF(test);
+    if (s < bestSDF) { bestSDF = s; best = d; }
+  }
+  w.dir = best.clone();
+  w.flash = 6;
+}
+
+function pickBiasedDir(current) {
+  // small-angle turns more likely than reversals → smoother trails
+  let total = 0;
+  const weights = DIRS.map(d => {
+    const dot = d.dot(current);
+    const w = Math.exp(2 * dot);
+    total += w;
+    return w;
+  });
+  let r = Math.random() * total;
+  for (let i = 0; i < DIRS.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return DIRS[i].clone();
+  }
+  return DIRS[0].clone();
+}
+
+const _scratch = new THREE.Vector3();
+function step(w) {
+  if (!w.alive) return;
+  w.age++;
+
+  // 1) proximity avoidance: if any other worm head is within proximity, steer away
+  const p = state.cfg.proximity;
+  if (p > 0) {
+    let nx = 0, ny = 0, nz = 0, found = false, nearestD2 = p * p;
+    for (const o of state.worms) {
+      if (o === w || !o.alive) continue;
+      const dx = w.pos.x - o.pos.x;
+      const dy = w.pos.y - o.pos.y;
+      const dz = w.pos.z - o.pos.z;
+      const d2 = dx*dx + dy*dy + dz*dz;
+      if (d2 < nearestD2) { nearestD2 = d2; nx = dx; ny = dy; nz = dz; found = true; }
+    }
+    if (found) {
+      // pick the discrete direction most aligned with the away vector
+      const len = Math.sqrt(nx*nx + ny*ny + nz*nz) || 1;
+      nx /= len; ny /= len; nz /= len;
+      let best = w.dir, bestDot = -Infinity;
+      for (const d of DIRS) {
+        const dt = d.x*nx + d.y*ny + d.z*nz;
+        if (dt > bestDot) { bestDot = dt; best = d; }
+      }
+      w.dir = best.clone();
+      w.flash = 3;
+    }
+  }
+
+  // 2) advance
+  _scratch.copy(w.pos).add(w.dir);
+
+  // wormy wobble — small random perpendicular nudge (snap-free, just for visual life)
+  if (Math.random() < 0.12) {
+    // perpendicular = any axis crossed with dir
+    const axis = Math.abs(w.dir.y) < 0.9 ? new THREE.Vector3(0,1,0) : new THREE.Vector3(1,0,0);
+    const perp = axis.clone().cross(w.dir).normalize();
+    const nudge = (Math.random() - 0.5) * 1.2;
+    _scratch.addScaledVector(perp, nudge);
+  }
+
+  // 3) container test: if next step is outside, escape inward and re-step
+  if (currentSDF(_scratch) > 0) {
+    bestEscapeDir(w);
+    _scratch.copy(w.pos).add(w.dir);
+    // safety: if we still went outside (rare, e.g. corner of cube), nudge back along sdf gradient
+    let safety = 4;
+    while (currentSDF(_scratch) > 0 && safety-- > 0) {
+      _scratch.multiplyScalar(0.95); // pull toward origin (which is inside every shape)
+    }
+  }
+
+  w.pos.copy(_scratch);
+
+  // 4) extend body, record trail
+  const head = w.body[0];
+  if (head.distanceToSquared(w.pos) > 0.04) {
+    w.body.unshift(w.pos.clone());
+    w.stepsSinceGrowth++;
+    w.stepsSinceTurn++;
+    pushTrailPoint(w.pos, w.trailColor);
+    if (w.stepsSinceGrowth >= state.cfg.growthSteps) {
+      w.maxLen++;
+      w.stepsSinceGrowth = 0;
+    }
+    while (w.body.length > w.maxLen) w.body.pop();
+    if (w.stepsSinceTurn > 8 && Math.random() < 0.08) {
+      w.dir = pickBiasedDir(w.dir);
+      w.stepsSinceTurn = 0;
+    }
+  }
+
+  if (w.flash > 0) w.flash--;
+
+  if (state.cfg.deathRate > 0 && Math.random() * 100 < state.cfg.deathRate) {
+    if (w.body.length > 1) { w.body.pop(); if (w.maxLen > 1) w.maxLen--; }
+  }
+
+  if (state.cfg.reproRate > 0 && w.body.length > 4 &&
+      Math.random() * 100 < state.cfg.reproRate / 5) {
+    const tail = w.body[w.body.length - 1];
+    state.worms.push(makeWorm(tail));
+  }
+}
+
+// ────────────────────────────────────────────────
+// RENDER LAYERS — body (instanced spheres) + trail (persistent points)
+// ────────────────────────────────────────────────
+const MAX_BODY = 4096;
+const bodyGeo = new THREE.SphereGeometry(0.55, 8, 6);
+const bodyMat = new THREE.MeshBasicMaterial({ color: COLOR.ink });
+const bodyMesh = new THREE.InstancedMesh(bodyGeo, bodyMat, MAX_BODY);
+bodyMesh.count = 0;
+bodyMesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(MAX_BODY * 3), 3);
+scene.add(bodyMesh);
+
+const headGeo = new THREE.SphereGeometry(0.85, 10, 8);
+const headMat = new THREE.MeshBasicMaterial({ color: COLOR.accent });
+const headMesh = new THREE.InstancedMesh(headGeo, headMat, 256);
+headMesh.count = 0;
+scene.add(headMesh);
+
+const MAX_TRAIL = 200_000;
+const trailGeo = new THREE.BufferGeometry();
+const trailPos = new Float32Array(MAX_TRAIL * 3);
+const trailCol = new Float32Array(MAX_TRAIL * 3);
+trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPos, 3));
+trailGeo.setAttribute('color',    new THREE.BufferAttribute(trailCol, 3));
+trailGeo.setDrawRange(0, 0);
+const trailMat = new THREE.PointsMaterial({
+  size: 1.6, sizeAttenuation: true, vertexColors: true,
+  transparent: true, opacity: 0.95,
+});
+const trailMesh = new THREE.Points(trailGeo, trailMat);
+scene.add(trailMesh);
+let trailWritten = 0;
+
+const _color = new THREE.Color();
+function pushTrailPoint(p, hex) {
+  if (trailWritten >= MAX_TRAIL) return;
+  const i = trailWritten;
+  trailPos[i*3+0] = p.x;
+  trailPos[i*3+1] = p.y;
+  trailPos[i*3+2] = p.z;
+  _color.setHex(hex);
+  trailCol[i*3+0] = _color.r;
+  trailCol[i*3+1] = _color.g;
+  trailCol[i*3+2] = _color.b;
+  trailWritten++;
+  trailGeo.attributes.position.needsUpdate = true;
+  trailGeo.attributes.color.needsUpdate = true;
+  trailGeo.setDrawRange(0, trailWritten);
+}
+
+const _mat = new THREE.Matrix4();
+const _vec = new THREE.Vector3();
+function syncMeshes() {
+  let bIdx = 0, hIdx = 0;
+  for (const w of state.worms) {
+    if (!w.alive) continue;
+    // body cells
+    for (let k = 1; k < w.body.length && bIdx < MAX_BODY; k++) {
+      const c = w.body[k];
+      _mat.makeTranslation(c.x, c.y, c.z);
+      const s = 0.85 + 0.15 * (k % 2);
+      _mat.scale(_vec.set(s, s, s));
+      bodyMesh.setMatrixAt(bIdx, _mat);
+      bIdx++;
+    }
+    // head
+    if (hIdx < 256) {
+      _mat.makeTranslation(w.pos.x, w.pos.y, w.pos.z);
+      headMesh.setMatrixAt(hIdx, _mat);
+      hIdx++;
+    }
+  }
+  bodyMesh.count = bIdx;
+  headMesh.count = hIdx;
+  bodyMesh.instanceMatrix.needsUpdate = true;
+  headMesh.instanceMatrix.needsUpdate = true;
+  trailMesh.visible = state.showTrail;
+}
+
+// ────────────────────────────────────────────────
+// LOOP
+// ────────────────────────────────────────────────
+let lastTick = 0, lastFrame = 0, frameCount = 0, fpsAccum = 0;
+function loop(now) {
+  const dt = now - lastFrame;
+  lastFrame = now;
+  fpsAccum += dt;
+  frameCount++;
+  if (fpsAccum >= 500) {
+    state.fps = Math.round((frameCount * 1000) / fpsAccum);
+    frameCount = 0; fpsAccum = 0;
+    document.getElementById('hud-fps').textContent = state.fps;
+  }
+
+  if (!state.paused) {
+    const tickInterval = 1000 / state.cfg.tickHz;
+    if (now - lastTick >= tickInterval) {
+      const ticks = Math.min(4, Math.floor((now - lastTick) / tickInterval));
+      for (let i = 0; i < ticks; i++) {
+        for (const w of state.worms) step(w);
+        state.ticks++;
+      }
+      lastTick = now;
+    }
+  }
+
+  syncMeshes();
+  controls.update();
+  renderer.render(scene, camera);
+
+  document.getElementById('hud-worms').textContent = state.worms.filter(w => w.alive).length;
+  document.getElementById('hud-ticks').textContent = state.ticks;
+
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// ────────────────────────────────────────────────
+// INPUT — left click spawns worm at raycast point INSIDE the container
+// ────────────────────────────────────────────────
+const raycaster = new THREE.Raycaster();
+const ndc = new THREE.Vector2();
+const _origin = new THREE.Vector3();
+
+cv.addEventListener('contextmenu', e => { e.preventDefault(); endAndExport(); });
+
+cv.addEventListener('click', e => {
+  if (e.shiftKey || e.altKey) return; // those modifiers mean rotate
+  const rect = cv.getBoundingClientRect();
+  ndc.x = ((e.clientX - rect.left) / rect.width)  * 2 - 1;
+  ndc.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+  raycaster.setFromCamera(ndc, camera);
+
+  // Try to hit the container surface; spawn just inside that point.
+  let spawn = null;
+  if (containerMesh) {
+    const hits = raycaster.intersectObject(containerMesh, false);
+    if (hits.length) {
+      const hit = hits[0].point.clone();
+      // pull slightly toward origin so the spawn is just inside
+      hit.multiplyScalar(0.92);
+      // sanity check sdf
+      if (currentSDF(hit) < 0) spawn = hit;
+    }
+  }
+  if (!spawn) {
+    // fallback: find any point on the ray that's inside the SDF
+    for (let t = 5; t < 200; t += 2) {
+      _origin.copy(raycaster.ray.origin).addScaledVector(raycaster.ray.direction, t);
+      if (currentSDF(_origin) < 0) { spawn = _origin.clone(); break; }
+    }
+  }
+  if (!spawn) spawn = new THREE.Vector3(0, 0, 0);
+  state.worms.push(makeWorm(spawn));
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === ' ') { state.paused = !state.paused; e.preventDefault(); }
+  if (e.key === 'c' || e.key === 'C') clearAll();
+  if (e.key === 't' || e.key === 'T') state.showTrail = !state.showTrail;
+});
+
+// ────────────────────────────────────────────────
+// EXPORT / CLEAR
+// ────────────────────────────────────────────────
+function endAndExport() {
+  state.paused = true;
+  // render once just to be sure
+  renderer.render(scene, camera);
+  cv.toBlob(blob => {
+    if (!blob) return;
+    // composite onto opaque LCD background (in case any pixels were transparent)
+    const out = document.createElement('canvas');
+    out.width = cv.width; out.height = cv.height;
+    const o = out.getContext('2d');
+    o.fillStyle = '#9bbc0f';
+    o.fillRect(0, 0, out.width, out.height);
+    const img = new Image();
+    img.onload = () => {
+      o.drawImage(img, 0, 0);
+      o.fillStyle = '#0f380f';
+      o.font = '11px ui-monospace, Menlo, monospace';
+      o.textAlign = 'right';
+      const stamp = `worm.nisha 3D · ${currentShape} · ticks ${state.ticks} · ${new Date().toISOString().slice(0,16).replace('T',' ')}`;
+      o.fillText(stamp, out.width - 8, out.height - 8);
+      out.toBlob(b2 => {
+        const url = URL.createObjectURL(b2);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `worm3d-${currentShape}-${Date.now()}.png`;
+        document.body.appendChild(a); a.click(); a.remove();
+        URL.revokeObjectURL(url);
+      }, 'image/png');
+    };
+    img.src = URL.createObjectURL(blob);
+  }, 'image/png');
+}
+
+function clearAll() {
+  state.worms = [];
+  state.ticks = 0;
+  trailWritten = 0;
+  trailGeo.setDrawRange(0, 0);
+  bodyMesh.count = 0;
+  headMesh.count = 0;
+}
+
+// ────────────────────────────────────────────────
+// CONTROLS
+// ────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+
+$('shape').addEventListener('change', e => {
+  buildContainer(e.target.value);
+  // keep worms but those now outside the new SDF will get pulled inward on next step
+});
+
+$('prox').addEventListener('input', () => {
+  let v = parseInt($('prox').value || '0', 10);
+  v = Math.max(0, Math.min(60, v));
+  state.cfg.proximity = v;
+  $('v-prox').textContent = v;
+});
+$('grow').addEventListener('input', () => {
+  state.cfg.growthSteps = parseInt($('grow').value, 10);
+  $('v-grow').textContent = $('grow').value;
+});
+$('death').addEventListener('input', () => {
+  state.cfg.deathRate = parseInt($('death').value, 10);
+  $('v-death').textContent = $('death').value;
+});
+$('repro').addEventListener('input', () => {
+  state.cfg.reproRate = parseInt($('repro').value, 10);
+  $('v-repro').textContent = $('repro').value;
+});
+$('speed').addEventListener('input', () => {
+  state.cfg.tickHz = parseInt($('speed').value, 10);
+  $('v-speed').textContent = $('speed').value;
+});
+
+document.querySelectorAll('.seg button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.seg button').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    const c = parseInt(b.dataset.set, 10);
+    state.cfg.dirCount = c;
+    $('v-dirs').textContent = c;
+    DIRS = buildDirs(c);
+  });
+});
+
+$('btn-clear').addEventListener('click', clearAll);
+$('btn-export').addEventListener('click', endAndExport);
+
+// resize handling — keep canvas at 640×480 logical, but adapt for high-DPI
+window.addEventListener('resize', () => {
+  // intentionally fixed; the canvas matches the device frame
+  renderer.setPixelRatio(window.devicePixelRatio);
+});
+</script>
+</body>
+</html>

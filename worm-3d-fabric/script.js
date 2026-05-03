@@ -938,97 +938,54 @@ document.getElementById('export-btn').onclick = saveImage;
 document.getElementById('export-obj-btn').onclick = exportOBJ;
 
 // ────────────────────────────────────────────────
-// OBJ EXPORT — gather the container shape, all painted cells, and live worm
-// tubes into one merged mesh and serialize via THREE.OBJExporter. The result
-// is a high-quality, watertight-ish triangle mesh suitable for Blender, MeshLab,
-// 3D-printing slicers, etc.
+// OBJ EXPORT — captures the visible voxel-paint pattern as a single merged
+// triangle mesh, ready for Blender / MeshLab / 3D printing. Container outline
+// and live worm/trail data are intentionally NOT included — only the painted
+// cells matter for the printable artifact.
 // ────────────────────────────────────────────────
 function exportOBJ() {
     if (typeof THREE.OBJExporter !== 'function') {
         alert('OBJExporter failed to load — check network.');
         return;
     }
+    if (paintCount === 0) {
+        alert('Nothing to export — paint a pattern first.');
+        return;
+    }
 
     const group = new THREE.Group();
     const utils = THREE.BufferGeometryUtils;
 
-    // 1) container shape — clone the geometry so the live mesh isn't affected
-    if (surface) {
-        const containerGeo = surface.geometry.clone();
-        containerGeo.computeVertexNormals();
-        const m = new THREE.Mesh(containerGeo);
-        m.name = `container_${geoSelect.value}`;
-        group.add(m);
+    // Cubes match the live-render shape. Slightly larger (0.95 vs 0.78
+    // on-screen) so adjacent voxels TOUCH in the export — gives a single
+    // watertight solid for printing instead of disconnected floating cubes.
+    const cubeGeo = new THREE.BoxGeometry(VOXEL * 0.95, VOXEL * 0.95, VOXEL * 0.95);
+    const matrix = new THREE.Matrix4();
+    const pieces = [];
+    for (let i = 0; i < paintCount; i++) {
+        paintMesh.getMatrixAt(i, matrix);
+        const g = cubeGeo.clone();
+        g.applyMatrix4(matrix);
+        pieces.push(g);
     }
 
-    // 2) painted cells — explode the InstancedMesh into a single merged mesh.
-    //    Use higher-res spheres for export quality; final geometry has proper normals.
-    if (paintCount > 0) {
-        const dotGeo = new THREE.SphereGeometry(VOXEL * 0.28, 16, 12);
-        const matrix = new THREE.Matrix4();
-        const pieces = [];
-        for (let i = 0; i < paintCount; i++) {
-            paintMesh.getMatrixAt(i, matrix);
-            const g = dotGeo.clone();
-            g.applyMatrix4(matrix);
-            pieces.push(g);
-        }
-        if (pieces.length && utils && utils.mergeBufferGeometries) {
-            const merged = utils.mergeBufferGeometries(pieces, false);
-            if (merged) {
-                merged.computeVertexNormals();
-                const m = new THREE.Mesh(merged);
-                m.name = 'pattern_dots';
-                group.add(m);
-            }
-        } else {
-            // fallback if BufferGeometryUtils didn't load — add each piece individually
-            pieces.forEach((g, i) => {
-                g.computeVertexNormals();
-                const m = new THREE.Mesh(g);
-                m.name = `dot_${i}`;
-                group.add(m);
-            });
-        }
-    }
-
-    // 3) accumulated trail lines — include as Line geometry in the OBJ. Most
-    //    3D apps render these as edge wireframes; can be extruded in Blender.
-    if (trailSegCount > 0) {
-        const lineGeo = new THREE.BufferGeometry();
-        const slice = trailPositions.slice(0, trailSegCount * 6);
-        lineGeo.setAttribute('position', new THREE.BufferAttribute(slice, 3));
-        const line = new THREE.LineSegments(lineGeo);
-        line.name = 'trail_lines';
-        group.add(line);
-    }
-
-    // 4) live worm body dots — build a smooth tube along each worm's cells so
-    //    the OBJ contains real worm-shaped geometry (better than dot clouds for
-    //    print/edit). One Mesh per alive worm.
-    worms.forEach((w, i) => {
-        if (w.isDead) return;
-        if (w.cells.length >= 2) {
-            const points = w.cells.map(c =>
-                new THREE.Vector3(c.ix * VOXEL, c.iy * VOXEL, c.iz * VOXEL)
-            );
-            const curve = new THREE.CatmullRomCurve3(points, false, 'centripetal', 0.5);
-            const segs = Math.max(points.length * 4, 8);
-            const tubeGeo = new THREE.TubeGeometry(curve, segs, VOXEL * 0.22, 8, false);
-            tubeGeo.computeVertexNormals();
-            const m = new THREE.Mesh(tubeGeo);
-            m.name = `worm_${i}_body`;
+    if (utils && utils.mergeBufferGeometries) {
+        const merged = utils.mergeBufferGeometries(pieces, false);
+        if (merged) {
+            merged.computeVertexNormals();
+            const m = new THREE.Mesh(merged);
+            m.name = 'pattern_voxels';
             group.add(m);
         }
-        // head sphere
-        const headGeo = new THREE.SphereGeometry(VOXEL * 0.4, 16, 12);
-        headGeo.computeVertexNormals();
-        const head = new THREE.Mesh(headGeo);
-        const c0 = w.cells[0];
-        head.position.set(c0.ix * VOXEL, c0.iy * VOXEL, c0.iz * VOXEL);
-        head.name = `worm_${i}_head`;
-        group.add(head);
-    });
+    } else {
+        // fallback: individual cubes if BufferGeometryUtils didn't load
+        pieces.forEach((g, i) => {
+            g.computeVertexNormals();
+            const m = new THREE.Mesh(g);
+            m.name = `voxel_${i}`;
+            group.add(m);
+        });
+    }
 
     const exporter = new THREE.OBJExporter();
     const objText = exporter.parse(group);
@@ -1036,7 +993,7 @@ function exportOBJ() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `worm3d-${geoSelect.value}-${Date.now()}.obj`;
+    a.download = `worm3d-${geoSelect.value}-${paintCount}cells-${Date.now()}.obj`;
     document.body.appendChild(a);
     a.click();
     a.remove();

@@ -1,0 +1,783 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>worm.nisha — pattern garden</title>
+<style>
+  :root {
+    --lcd-bg: #9bbc0f;
+    --lcd-bg-deep: #8bac0f;
+    --lcd-ink: #0f380f;
+    --lcd-ink-soft: #306230;
+    --shell: #1a1a1a;
+    --shell-light: #2a2a2a;
+    --accent: #c2d62b;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #0a0a0a;
+    color: #d8d8d8;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    min-height: 100vh;
+  }
+  body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 24px;
+    padding: 24px;
+  }
+  @media (max-width: 900px) {
+    body { grid-template-columns: 1fr; }
+  }
+
+  .stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .device {
+    background: var(--shell);
+    padding: 18px 18px 26px;
+    border-radius: 18px;
+    box-shadow:
+      0 0 0 1px #000,
+      0 1px 0 1px var(--shell-light) inset,
+      0 30px 80px rgba(0,0,0,0.6);
+    position: relative;
+  }
+  .device::after {
+    content: "NOKLA"; /* knockoff vibes */
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #444;
+    font-size: 10px;
+    letter-spacing: 4px;
+  }
+
+  .screen {
+    position: relative;
+    background: var(--lcd-bg);
+    padding: 10px;
+    border-radius: 6px;
+    box-shadow:
+      inset 0 0 0 2px #000,
+      inset 0 0 30px rgba(15,56,15,0.35);
+  }
+  canvas {
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    background: var(--lcd-bg);
+  }
+  /* subtle scanline / dot-matrix */
+  .screen::before {
+    content: "";
+    position: absolute;
+    inset: 10px;
+    pointer-events: none;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(15,56,15,0.06) 0 1px, transparent 1px 3px);
+    mix-blend-mode: multiply;
+    border-radius: 2px;
+  }
+
+  .hud {
+    width: 100%;
+    max-width: 640px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #888;
+    letter-spacing: 1px;
+  }
+  .hud b { color: var(--accent); font-weight: 600; }
+
+  .panel {
+    background: #131313;
+    border: 1px solid #222;
+    border-radius: 12px;
+    padding: 18px;
+    height: fit-content;
+    position: sticky;
+    top: 24px;
+  }
+  .panel h1 {
+    margin: 0 0 4px;
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: var(--accent);
+  }
+  .panel p.lede {
+    margin: 0 0 18px;
+    font-size: 11px;
+    color: #777;
+    line-height: 1.5;
+  }
+  .ctl { margin-bottom: 16px; }
+  .ctl label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 11px;
+    color: #aaa;
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+  }
+  .ctl label .v {
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  .ctl input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent);
+  }
+  .ctl input[type="number"] {
+    width: 100%;
+    background: #0a0a0a;
+    border: 1px solid #2a2a2a;
+    color: #d8d8d8;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font: inherit;
+    font-size: 12px;
+  }
+  .ctl input[type="number"]:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .chips {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+  }
+  .chip {
+    user-select: none;
+    cursor: pointer;
+    position: relative;
+    background: transparent;
+    border: 1px dashed #3a3a3a;
+    border-radius: 4px;
+    padding: 6px 0;
+    text-align: center;
+    font-size: 10px;
+    color: #555;
+    transition: all 0.1s;
+    text-decoration: line-through;
+    text-decoration-color: #444;
+  }
+  .chip.on {
+    background: var(--accent);
+    color: #000;
+    border: 1px solid var(--accent);
+    text-decoration: none;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .chip.on:hover { color: #000; }
+  .hint-row {
+    font-size: 10px;
+    color: #555;
+    margin-top: 6px;
+    line-height: 1.4;
+  }
+
+  .actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .btn {
+    flex: 1;
+    padding: 10px;
+    background: #0a0a0a;
+    border: 1px solid #2a2a2a;
+    border-radius: 6px;
+    color: #d8d8d8;
+    font: inherit;
+    font-size: 11px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn.primary { background: var(--accent); color: #000; border-color: var(--accent); }
+  .btn.primary:hover { background: #d6eb35; color: #000; }
+
+  .hint {
+    font-size: 10px;
+    color: #555;
+    line-height: 1.6;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid #1f1f1f;
+  }
+  .hint kbd {
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 9px;
+    color: #aaa;
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="device">
+    <div class="screen">
+      <canvas id="cv" width="640" height="480"></canvas>
+    </div>
+  </div>
+  <div class="hud">
+    <span>worms <b id="hud-worms">0</b></span>
+    <span>ticks <b id="hud-ticks">0</b></span>
+    <span>fps <b id="hud-fps">--</b></span>
+  </div>
+</div>
+
+<aside class="panel">
+  <div style="display:flex;gap:6px;margin-bottom:18px">
+    <a href="index.html"   style="flex:1;text-align:center;padding:7px;font-size:10px;letter-spacing:1px;text-decoration:none;color:#000;background:var(--accent);border:1px solid var(--accent);border-radius:5px">2D</a>
+    <a href="index3d.html" style="flex:1;text-align:center;padding:7px;font-size:10px;letter-spacing:1px;text-decoration:none;color:#777;background:#0a0a0a;border:1px solid #222;border-radius:5px">3D</a>
+  </div>
+  <h1>WORM.NISHA</h1>
+  <p class="lede">click to plant worms. they avoid each other &amp; the edges. right-click to end &amp; export the pattern.</p>
+
+  <div class="ctl">
+    <label>avoidance proximity <span class="v" id="v-prox">8</span><small style="color:#555">px</small></label>
+    <input type="number" id="prox" min="1" max="200" value="8" />
+  </div>
+
+  <div class="ctl">
+    <label>growth interval <span class="v" id="v-grow">5</span><small style="color:#555">steps/+1px</small></label>
+    <input type="range" id="grow" min="1" max="50" step="1" value="5" />
+  </div>
+
+  <div class="ctl">
+    <label>death rate <span class="v" id="v-death">0</span></label>
+    <input type="range" id="death" min="0" max="100" step="1" value="0" />
+  </div>
+
+  <div class="ctl">
+    <label>reproduction rate <span class="v" id="v-repro">2</span></label>
+    <input type="range" id="repro" min="0" max="100" step="1" value="2" />
+  </div>
+
+  <div class="ctl">
+    <label>allowed directions <span class="v"><span id="v-angles">8</span>/8 on</span></label>
+    <div class="chips" id="chips"></div>
+    <div class="hint-row">click to toggle. yellow = worm can move that way. dashed = blocked.</div>
+  </div>
+
+  <div class="ctl">
+    <label>tick speed <span class="v" id="v-speed">60</span><small style="color:#555">/s</small></label>
+    <input type="range" id="speed" min="5" max="120" step="5" value="60" />
+  </div>
+
+  <div class="actions">
+    <button class="btn" id="btn-clear">CLEAR</button>
+    <button class="btn primary" id="btn-export">EXPORT PNG</button>
+  </div>
+
+  <div class="hint">
+    <div><kbd>click</kbd> spawn a worm</div>
+    <div><kbd>right-click</kbd> end &amp; save PNG</div>
+    <div><kbd>C</kbd> clear · <kbd>space</kbd> pause · <kbd>T</kbd> toggle trail</div>
+    <div style="margin-top:8px;color:#444">worms steer around each other &amp; the edges. their trail is the pattern.</div>
+  </div>
+</aside>
+
+<script>
+(() => {
+  // ────────────────────────────────────────────────
+  // CONFIG
+  // ────────────────────────────────────────────────
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  // logical grid resolution — each cell renders as several display pixels
+  const SCALE = 4;
+  const GW = cv.width / SCALE;   // 160
+  const GH = cv.height / SCALE;  // 120
+
+  const COLOR = {
+    bgFill:  '#9bbc0f',
+    bgDot:   '#8bac0f',
+    head:    '#0f380f',
+    body:    '#0f380f',
+    bodyAlt: '#306230',
+    ghost:   'rgba(15,56,15,0.35)',
+    flash:   '#c2d62b',
+    text:    '#0f380f',
+  };
+
+  const ALL_ANGLES = [0, 45, 90, 135, 180, 225, 270, 315];
+
+  // ────────────────────────────────────────────────
+  // STATE
+  // ────────────────────────────────────────────────
+  // offscreen pattern layer — every cell a worm visits is recorded here forever
+  const pattern = document.createElement('canvas');
+  pattern.width = cv.width;
+  pattern.height = cv.height;
+  const pctx = pattern.getContext('2d');
+
+  const state = {
+    worms: [],
+    ticks: 0,
+    paused: false,
+    started: false,
+    showTrail: true,
+    fps: 0,
+    cfg: {
+      proximity: 8,
+      growthSteps: 5,      // steps per +1px length
+      deathRate: 0,        // 0..100 → percent per tick chance to lose tail segment
+      reproRate: 2,
+      angles: new Set(ALL_ANGLES),
+      tickHz: 60,
+    },
+  };
+
+  // ────────────────────────────────────────────────
+  // WORM
+  // ────────────────────────────────────────────────
+  // small palette of dark-green tints so multi-worm patterns are distinguishable
+  // while staying inside the LCD aesthetic
+  const TRAIL_COLORS = [
+    '#0f380f', '#173d17', '#1f4f1f', '#0a2e0a', '#306230', '#284828', '#3d6b3d', '#143614',
+  ];
+
+  let wormId = 0;
+  function makeWorm(x, y, parent = null) {
+    const allowed = [...state.cfg.angles];
+    const angle = allowed.length
+      ? allowed[Math.floor(Math.random() * allowed.length)]
+      : 0;
+    return {
+      id: ++wormId,
+      x, y,
+      body: [{ x: Math.round(x), y: Math.round(y) }],
+      maxLen: parent ? Math.max(3, Math.floor(parent.maxLen / 2)) : 3,
+      angleDeg: angle,
+      stepsSinceGrowth: 0,
+      stepsSinceTurn: 0,
+      alive: true,
+      age: 0,
+      trailColor: parent
+        ? parent.trailColor
+        : TRAIL_COLORS[wormId % TRAIL_COLORS.length],
+      flash: 0,
+    };
+  }
+
+  function pickAngle(current, exclude = null) {
+    const allowed = [...state.cfg.angles].filter(a => a !== exclude);
+    if (!allowed.length) return current;
+    // bias toward angles closer to current direction (smoother turning)
+    const weighted = allowed.map(a => {
+      const d = Math.min(Math.abs(a - current), 360 - Math.abs(a - current));
+      return { a, w: 1 / (1 + d / 45) };
+    });
+    const total = weighted.reduce((s, e) => s + e.w, 0);
+    let r = Math.random() * total;
+    for (const e of weighted) { r -= e.w; if (r <= 0) return e.a; }
+    return weighted[0].a;
+  }
+
+  function snapToAllowed(targetDeg) {
+    const allowed = [...state.cfg.angles];
+    if (!allowed.length) return null;
+    let best = allowed[0], bestD = Infinity;
+    for (const a of allowed) {
+      const d = Math.min(Math.abs(a - targetDeg), 360 - Math.abs(a - targetDeg));
+      if (d < bestD) { bestD = d; best = a; }
+    }
+    return best;
+  }
+
+  function turnAwayFrom(w, fromX, fromY) {
+    // steer toward the vector pointing AWAY from (fromX, fromY)
+    const dx = w.x - fromX;
+    const dy = w.y - fromY;
+    if (dx === 0 && dy === 0) return;
+    const target = (Math.atan2(-dy, dx) * 180 / Math.PI + 360) % 360;
+    const snap = snapToAllowed(target);
+    if (snap !== null) { w.angleDeg = snap; w.flash = 4; }
+  }
+
+  function turnAwayFromTail(w) {
+    if (w.body.length < 2) return;
+    const tail = w.body[w.body.length - 1];
+    turnAwayFrom(w, tail.x, tail.y);
+    w.flash = 6;
+  }
+
+  // pick the allowed angle that lands the worm furthest from any edge
+  function escapeEdge(w) {
+    const allowed = [...state.cfg.angles];
+    if (!allowed.length) return;
+    let best = w.angleDeg, bestMargin = -Infinity;
+    for (const a of allowed) {
+      const r = a * Math.PI / 180;
+      const tx = w.x + Math.cos(r);
+      const ty = w.y - Math.sin(r);
+      const margin = Math.min(tx, GW - tx, ty, GH - ty);
+      if (margin > bestMargin) { bestMargin = margin; best = a; }
+    }
+    w.angleDeg = best;
+    w.flash = 6;
+  }
+
+  function step(w) {
+    if (!w.alive) return;
+    w.age++;
+
+    // proximity avoidance — steer away from any worm within radius before moving
+    const p = state.cfg.proximity;
+    if (p > 0) {
+      let nearestDx = 0, nearestDy = 0, nearestD2 = Infinity;
+      for (const o of state.worms) {
+        if (o === w || !o.alive) continue;
+        const dx = w.x - o.x;
+        const dy = w.y - o.y;
+        const d2 = dx * dx + dy * dy;
+        if (d2 < p * p && d2 < nearestD2) {
+          nearestD2 = d2; nearestDx = dx; nearestDy = dy;
+        }
+      }
+      if (nearestD2 < Infinity) {
+        const target = (Math.atan2(-nearestDy, nearestDx) * 180 / Math.PI + 360) % 360;
+        const snap = snapToAllowed(target);
+        if (snap !== null) { w.angleDeg = snap; w.flash = 3; }
+      }
+    }
+
+    // 1px advance in current direction + tiny orthogonal wobble
+    const rad = w.angleDeg * Math.PI / 180;
+    const cos = Math.cos(rad), sin = -Math.sin(rad); // canvas y inverted
+    let nx = w.x + cos;
+    let ny = w.y + sin;
+
+    // orthogonal "wormy" drift — random ±1px perpendicular every few steps
+    if (Math.random() < 0.12) {
+      const px = -sin, py = cos;
+      const nudge = (Math.random() < 0.5 ? -1 : 1) * 0.6;
+      nx += px * nudge;
+      ny += py * nudge;
+    }
+
+    // edge: pick whichever allowed angle pulls the worm furthest inside — never die
+    if (nx < 1 || nx >= GW - 1 || ny < 1 || ny >= GH - 1) {
+      escapeEdge(w);
+      const r2 = w.angleDeg * Math.PI / 180;
+      nx = w.x + Math.cos(r2);
+      ny = w.y - Math.sin(r2);
+      // safety clamp in case all allowed angles still graze the boundary
+      nx = Math.max(0.5, Math.min(GW - 0.5, nx));
+      ny = Math.max(0.5, Math.min(GH - 0.5, ny));
+    }
+
+    w.x = nx;
+    w.y = ny;
+
+    const cell = { x: Math.round(nx), y: Math.round(ny) };
+    const head = w.body[0];
+    if (cell.x !== head.x || cell.y !== head.y) {
+      w.body.unshift(cell);
+      w.stepsSinceGrowth++;
+      w.stepsSinceTurn++;
+
+      // record into pattern layer — this is what builds the artwork
+      pctx.fillStyle = w.trailColor;
+      pctx.fillRect(cell.x * SCALE, cell.y * SCALE, SCALE, SCALE);
+
+      // user-defined growth interval
+      if (w.stepsSinceGrowth >= state.cfg.growthSteps) {
+        w.maxLen++;
+        w.stepsSinceGrowth = 0;
+      }
+
+      while (w.body.length > w.maxLen) w.body.pop();
+
+      // small chance of voluntary turn so movement looks organic
+      if (w.stepsSinceTurn > 8 && Math.random() < 0.08) {
+        w.angleDeg = pickAngle(w.angleDeg);
+        w.stepsSinceTurn = 0;
+      }
+    }
+
+    if (w.flash > 0) w.flash--;
+
+    // death rate: per-tick chance to trim a tail segment (never below 1)
+    if (state.cfg.deathRate > 0 && Math.random() * 100 < state.cfg.deathRate) {
+      if (w.body.length > 1) {
+        w.body.pop();
+        if (w.maxLen > 1) w.maxLen--;
+      }
+    }
+
+    // reproduction: spawn baby worm at tail
+    if (state.cfg.reproRate > 0 &&
+        w.body.length > 4 &&
+        Math.random() * 100 < state.cfg.reproRate / 5) {
+      const tail = w.body[w.body.length - 1];
+      const baby = makeWorm(tail.x + 0.5, tail.y + 0.5, w);
+      baby.flash = 8;
+      state.worms.push(baby);
+    }
+  }
+
+
+  // ────────────────────────────────────────────────
+  // RENDER
+  // ────────────────────────────────────────────────
+  function clearScreen() {
+    ctx.fillStyle = COLOR.bgFill;
+    ctx.fillRect(0, 0, cv.width, cv.height);
+    // dot matrix shadow texture
+    ctx.fillStyle = COLOR.bgDot;
+    for (let y = 0; y < GH; y += 4) {
+      for (let x = 0; x < GW; x += 4) {
+        ctx.fillRect(x * SCALE, y * SCALE, 1, 1);
+      }
+    }
+  }
+
+  function drawCell(x, y, color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(x * SCALE, y * SCALE, SCALE, SCALE);
+  }
+
+  function drawDeadGhost(w) {
+    // fading dotted body
+    ctx.fillStyle = COLOR.ghost;
+    for (let i = 0; i < w.body.length; i += 2) {
+      const c = w.body[i];
+      ctx.fillRect(c.x * SCALE, c.y * SCALE, SCALE, SCALE);
+    }
+  }
+
+  function drawWorm(w) {
+    if (!w.alive) { drawDeadGhost(w); return; }
+    const len = w.body.length;
+    for (let i = len - 1; i > 0; i--) {
+      const c = w.body[i];
+      const col = i % 2 === 0 ? COLOR.body : COLOR.bodyAlt;
+      drawCell(c.x, c.y, col);
+    }
+    const head = w.body[0];
+    if (w.flash > 0) {
+      drawCell(head.x, head.y, COLOR.flash);
+    } else {
+      drawCell(head.x, head.y, COLOR.head);
+      ctx.fillStyle = COLOR.bgFill;
+      ctx.fillRect(head.x * SCALE + SCALE - 2, head.y * SCALE + 1, 1, 1);
+    }
+  }
+
+  function drawStartScreen() {
+    clearScreen();
+    ctx.fillStyle = COLOR.text;
+    ctx.font = '12px ui-monospace, Menlo, monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const t = Math.floor(performance.now() / 500) % 2 === 0;
+    if (t) ctx.fillText('[ click any pixel to start ]', cv.width / 2, cv.height / 2);
+    ctx.font = '9px ui-monospace, Menlo, monospace';
+    ctx.fillStyle = COLOR.bodyAlt;
+    ctx.fillText('right-click ends & exports', cv.width / 2, cv.height / 2 + 22);
+  }
+
+  function render() {
+    if (!state.started) { drawStartScreen(); return; }
+    clearScreen();
+    // composite the accumulated pattern (the actual artwork) underneath the worms
+    if (state.showTrail) ctx.drawImage(pattern, 0, 0);
+    // proximity halos around alive worms (subtle visual cue for the avoidance radius)
+    if (state.cfg.proximity > 0) {
+      ctx.fillStyle = 'rgba(15,56,15,0.05)';
+      for (const w of state.worms) {
+        if (!w.alive) continue;
+        const r = state.cfg.proximity * SCALE;
+        ctx.beginPath();
+        ctx.arc(w.x * SCALE + SCALE/2, w.y * SCALE + SCALE/2, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    for (const w of state.worms) drawWorm(w);
+  }
+
+  // ────────────────────────────────────────────────
+  // LOOP
+  // ────────────────────────────────────────────────
+  let lastTick = 0, lastFrame = 0, frameCount = 0, fpsAccum = 0;
+  function loop(now) {
+    const dt = now - lastFrame;
+    lastFrame = now;
+    fpsAccum += dt;
+    frameCount++;
+    if (fpsAccum >= 500) {
+      state.fps = Math.round((frameCount * 1000) / fpsAccum);
+      frameCount = 0; fpsAccum = 0;
+      document.getElementById('hud-fps').textContent = state.fps;
+    }
+
+    if (!state.paused && state.started) {
+      const tickInterval = 1000 / state.cfg.tickHz;
+      if (now - lastTick >= tickInterval) {
+        const ticks = Math.min(4, Math.floor((now - lastTick) / tickInterval));
+        for (let i = 0; i < ticks; i++) {
+          for (const w of state.worms) step(w);
+          state.ticks++;
+        }
+        lastTick = now;
+      }
+    }
+
+    render();
+    document.getElementById('hud-worms').textContent =
+      state.worms.filter(w => w.alive).length;
+    document.getElementById('hud-ticks').textContent = state.ticks;
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  // ────────────────────────────────────────────────
+  // INPUT
+  // ────────────────────────────────────────────────
+  function canvasCoords(e) {
+    const rect = cv.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (cv.width / rect.width) / SCALE;
+    const y = (e.clientY - rect.top) * (cv.height / rect.height) / SCALE;
+    return { x, y };
+  }
+
+  cv.addEventListener('contextmenu', e => {
+    e.preventDefault();
+    endAndExport();
+  });
+  cv.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    const { x, y } = canvasCoords(e);
+    if (x < 0 || y < 0 || x >= GW || y >= GH) return;
+    state.started = true;
+    state.worms.push(makeWorm(x, y));
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === ' ') { state.paused = !state.paused; e.preventDefault(); }
+    if (e.key === 'c' || e.key === 'C') clearAll();
+    if (e.key === 't' || e.key === 'T') state.showTrail = !state.showTrail;
+  });
+
+  // ────────────────────────────────────────────────
+  // EXPORT / CLEAR
+  // ────────────────────────────────────────────────
+  function endAndExport() {
+    state.paused = true;
+    // export the PATTERN (the artwork), not the live frame with worm bodies
+    const out = document.createElement('canvas');
+    out.width = cv.width;
+    out.height = cv.height;
+    const o = out.getContext('2d');
+    o.fillStyle = COLOR.bgFill;
+    o.fillRect(0, 0, out.width, out.height);
+    // dot-matrix texture so exports keep the LCD vibe
+    o.fillStyle = COLOR.bgDot;
+    for (let y = 0; y < GH; y += 4) {
+      for (let x = 0; x < GW; x += 4) {
+        o.fillRect(x * SCALE, y * SCALE, 1, 1);
+      }
+    }
+    o.drawImage(pattern, 0, 0);
+
+    o.fillStyle = COLOR.text;
+    o.font = '10px ui-monospace, Menlo, monospace';
+    o.textAlign = 'right';
+    const stamp = `worm.nisha · ticks ${state.ticks} · ${new Date().toISOString().slice(0,16).replace('T',' ')}`;
+    o.fillText(stamp, out.width - 8, out.height - 8);
+
+    out.toBlob(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `worm-${Date.now()}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }, 'image/png');
+  }
+
+  function clearAll() {
+    state.worms = [];
+    state.ticks = 0;
+    state.started = false;
+    pctx.clearRect(0, 0, pattern.width, pattern.height);
+  }
+
+  // ────────────────────────────────────────────────
+  // CONTROLS
+  // ────────────────────────────────────────────────
+  const proxEl = document.getElementById('prox');
+  const growEl = document.getElementById('grow');
+  const deathEl = document.getElementById('death');
+  const reproEl = document.getElementById('repro');
+  const speedEl = document.getElementById('speed');
+  proxEl.addEventListener('input', () => {
+    let v = parseInt(proxEl.value || '0', 10);
+    v = Math.max(1, Math.min(GW - 1, v));
+    state.cfg.proximity = v;
+    document.getElementById('v-prox').textContent = v;
+  });
+  growEl.addEventListener('input', () => {
+    state.cfg.growthSteps = parseInt(growEl.value, 10);
+    document.getElementById('v-grow').textContent = growEl.value;
+  });
+  deathEl.addEventListener('input', () => {
+    state.cfg.deathRate = parseInt(deathEl.value, 10);
+    document.getElementById('v-death').textContent = deathEl.value;
+  });
+  reproEl.addEventListener('input', () => {
+    state.cfg.reproRate = parseInt(reproEl.value, 10);
+    document.getElementById('v-repro').textContent = reproEl.value;
+  });
+  speedEl.addEventListener('input', () => {
+    state.cfg.tickHz = parseInt(speedEl.value, 10);
+    document.getElementById('v-speed').textContent = speedEl.value;
+  });
+
+  const chips = document.getElementById('chips');
+  ALL_ANGLES.forEach(a => {
+    const el = document.createElement('div');
+    el.className = 'chip on';
+    el.textContent = a + '°';
+    el.dataset.angle = a;
+    el.addEventListener('click', () => {
+      if (state.cfg.angles.has(a)) {
+        if (state.cfg.angles.size > 1) state.cfg.angles.delete(a);
+      } else {
+        state.cfg.angles.add(a);
+      }
+      el.classList.toggle('on', state.cfg.angles.has(a));
+      document.getElementById('v-angles').textContent = state.cfg.angles.size;
+    });
+    chips.appendChild(el);
+  });
+  document.getElementById('v-angles').textContent = state.cfg.angles.size;
+
+  document.getElementById('btn-clear').addEventListener('click', clearAll);
+  document.getElementById('btn-export').addEventListener('click', endAndExport);
+})();
+</script>
+</body>
+</html>
